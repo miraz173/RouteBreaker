@@ -1,3 +1,4 @@
+
 #include "functions&Classes.h"
 
 using namespace std;
@@ -44,42 +45,46 @@ int main(){
     /*------------discarded the 3 lines with comments----------*/
 
     /*------------take information of edges of the node------------*/
-    for (int i = 0; i < cityNumber; ++i) {
+    for (int i = 0; (i < cityNumber)&& file; ++i) {
         getline(file, line);    //line with spaces
         getline(file, line);    // discard the line with comments
-        getline(file, line);    //get city name
-        //cout<<"---"<<city[i].name<<"---\n";      //debug line---------------------
+        if(!getline(file, line))//get city name
+        {
+            cout<<"getline() 3 failed\n";
+            return -3;
+        }
         if (city[i].name == line) {    //check if city name is same as the object name
-            getline(file, line);//take edge number
+            line.clear();
+            if(!getline(file, line))
+            {
+                cerr<<"getline() 4 failed\n";
+            }//take edge number
             connectionSize= atoi(line.c_str()); //assign number of edges of the node
-            //cout<<connectionSize<<"\n"; //debug line-------------------
 
             for (int j = 0; j < connectionSize; ++j) {
                 Connection tempConnection;
                 city[i].connection.push_back(tempConnection);
                 getInfoFromLine(file, &city[i].connection[j], city, cityNumber);
-                cout<<city[i].connection[j].link->name<<" ";
             }
         }
         else
         {
-            cout << "city infos are not defined in order of initial declaration\n";
+            cerr << "city infos are not defined in order of initial declaration\n";
             return -1;
         }
     }
     /*------------took information of edges of the node------------*/
 
     /*------------------UI----------------*/
-    int origin, destination;
-    system("pause");
     system("cls");
+    int origin, destination;
     cout<<"Available cities: ";
     for (int i = 0; i < cityNumber; ++i) {
         cout<<i<<") "<<city[i].name<<", ";
     }
     cout<<"\nEnter Origin City Number: ";
     cin>>origin;
-    cout<<"\nEnter Destination City Number: ";
+    cout<<"Enter Destination City Number: ";
     cin>>destination;
     /*------------------UI----------------*/
 
@@ -90,20 +95,12 @@ int main(){
     vector<Node*> openList, closed;
     Node* current, *tempNode, *location;
 
-    tempNode= new Node(0, originCity, "", destinationCity);
-    openList.push_back(tempNode);
-    current=new Node(openList.back()->g_prevDist, openList.back()->nodeCity, openList.back()->path, destinationCity);
-    openList.pop_back();
+    current=new Node(0, originCity, "", destinationCity);
 
-    if (!current){
-        cout<<"current variable uninitialized.\nNeeds debugging\n";
-        return -2;
-    }
-    else cout<<"while() section reached\n";//debug line
-
-    while (current->nodeCity != destinationCity){cout<<"inside while()\n";
+    while (current->nodeCity->name != destinationCity->name)
+    {
         for (int i = 0; i < current->nodeCity->connection.size(); ++i)
-        {cout<<"iteration: "<<i<<"  ";
+        {
             location = isInOpenList(current->nodeCity->connection[i].link->name, openList);
 
             if (!location && !isInClosedList(current->nodeCity->connection[i].link->name, closed)){
@@ -111,7 +108,7 @@ int main(){
                 openList.push_back(tempNode);
             }
             else if (location)
-            { cout<<location<<"<-location\n";
+            {
                 tempNode=new Node(current->g_prevDist+ getDistance(current->nodeCity, current->nodeCity->connection[i].link), current->nodeCity->connection[i].link, current->path, destinationCity);
                 if (tempNode->f < location->f){
                     openList.push_back(tempNode);
@@ -119,21 +116,17 @@ int main(){
                     location->g_prevDist=INFINITY;
                 }
             }
-
-            cout<<"openList: 1"<<openList.back()->nodeCity->name<<"\ncloseList: "<<closed.back()->nodeCity->name;//debug line
-
-            cout<<"before sort\n";
-            sort(openList.begin(), openList.end(), sort_pred());
-            cout<<"after sort\n";
-            for (int j = 0; j < openList.size(); ++j) {
-                cout<<openList[i]<<" ";
-            }//debug loop
-
-            closed.push_back(current);
-            current=openList.back();
-            openList.pop_back();
         }
+
+        sort(openList.begin(), openList.end(), sort_pred());
+
+        closed.push_back(current);
+        current=openList.back();
+        openList.pop_back();
     }
-    cout<<"Path: "<<current->path<<" Dest: "<<current->nodeCity->name<<"\n";
     /*-----------------A* algorithm-----------------*/
+
+    /*-----------------output-----------------------*/
+    cout<<"Path: "<<current->path<<"\n"<<"cost: "<<current->g_prevDist;
+    /*-----------------output-----------------------*/
 }
