@@ -17,17 +17,17 @@ using namespace std;
 
 
 class City;
+class Node;
 class Transport;
 class Connection;
 class Coordinate;
-class Node;
 
-City *getCityAddress(const string& basicString, City *city, int cityNum);
-void getInfoFromLine(ifstream& file, Connection *connection, City *city, int cityNum);
-void getNameNCoordinateFromLine(ifstream& file, City *city);
 double getDistance(City* a, City* b);
-bool isInClosedList(const string& basicString, const vector<Node*>& closed);
+void getNameNCoordinateFromLine(ifstream& file, City *city);
 Node* isInOpenList(const string& basicString, vector<Node*>& open);
+City *getCityAddress(const string& basicString, City *city, int cityNum);
+bool isInClosedList(const string& basicString, const vector<Node*>& closed);
+void getInfoFromLine(ifstream& file, Connection *connection, City *city, int cityNum);
 
 
 
@@ -82,10 +82,42 @@ public:
         g_prevDist=g_prvDst;
         h_distFromDestination= getDistance(nodeCity, destination);
         f=g_prevDist+h_distFromDestination;
-        path+=p;
+        path= p + " -> " + nodeCity->name;
     }
 };
 
+struct sort_pred {
+    bool operator()(const Node* left, const Node* right) {
+        return left->f > right->f;
+    }
+};
+double getDistance(City* a, City* b){
+    return sqrt(pow(a->loc.x - b->loc.x, 2) + pow(a->loc.y - b->loc.y, 2));
+}
+void getNameNCoordinateFromLine(ifstream& file, City *city) {
+    string s, info[8];
+    if(!getline(file, s))
+    {
+        cout<<"error 6\n";
+        return;
+    }
+    int i = 0, j = 0;
+
+    while (s[i] != '\n' && s[i]!='\0' && file)//until line has ended
+    {
+        while (s[i] != ',' && s[i] != '\n' && s[i]!='\0' && file) //take each word
+        {
+            info[j] += s[i];
+            i++;
+        }
+        i++;
+        j++;
+    }
+    s.clear();
+    city->name = info[0];
+    city->loc.x= atof(info[1].c_str());
+    city->loc.y= atof(info[2].c_str());
+}
 Node* isInOpenList(const string& basicString, vector<Node*>& open) {
     for (auto & i : open) {
         if (i->nodeCity->name==basicString ){
@@ -94,16 +126,11 @@ Node* isInOpenList(const string& basicString, vector<Node*>& open) {
     }
     return nullptr;
 }
-struct sort_pred {
-    bool operator()(const Node* left, const Node* right) {
-        return left->f > right->f;
-    }
-};
 City *getCityAddress(const string& basicString, City *city, int cityNum)
 {
     for (int i = 0; i < cityNum; ++i) {
         if (basicString==city[i].name){
-            return city;
+            return &city[i];
         }
     }
     cout<<"city not found\nMay behave weirdly\n";
@@ -117,23 +144,26 @@ bool isInClosedList(const string& basicString, const vector<Node *>& closed) {
     }
     return false;
 }
-double getDistance(City* a, City* b){
-    return sqrt(pow(a->loc.x - b->loc.x, 2) + pow(a->loc.y - b->loc.y, 2));
-}
 void getInfoFromLine(ifstream& file, Connection *connection, City *city, int cityNum){
     string s, info[8];
-    getline(file, s);
+    if(!getline(file, s))
+    {
+        cout<<"getline() 5 failed\n";
+        return;
+    }
     int i=0, j=0; size_t n=s.size();
+    if (n==0){cout<<"newline mine\n";}
     while (i<n)//until line has ended
     {
         while(s[i]!=',' && i<n) //take each word
         {
-            info[j]+= s[i]; //cout<<s[i];//debug line-------
+            info[j]+= s[i];
             i++;
-        }//cout<<", ";
+        }
         i++;
         j++;
-    }//cout<<"\n";
+    }
+    s.clear();
     connection->link= getCityAddress(info[0], city, cityNum);
     connection->bus.time =  (float)atof(info[1].c_str());
     connection->bus.cost =  (float)atof(info[2].c_str());
@@ -141,23 +171,4 @@ void getInfoFromLine(ifstream& file, Connection *connection, City *city, int cit
     connection->train.cost= (float)atof(info[4].c_str());
     connection->plane.time= (float)atof(info[5].c_str());
     connection->plane.cost= (float)atof(info[6].c_str());
-}
-void getNameNCoordinateFromLine(ifstream& file, City *city) {
-    string s, info[8];
-    getline(file, s);
-    int i = 0, j = 0;
-
-    while (s[i] != '\n' && s[i]!='\0')//until line has ended
-    {
-        while (s[i] != ',' && s[i] != '\n' && s[i]!='\0') //take each word
-        {
-            info[j] += s[i];
-            i++;
-        }
-        i++;
-        j++;
-    }
-    city->name = info[0];
-    city->loc.x= atof(info[1].c_str());
-    city->loc.y= atof(info[2].c_str());
 }
